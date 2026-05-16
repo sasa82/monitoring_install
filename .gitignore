@@ -1,0 +1,3 @@
+## Environment files
+docker/.env
+!docker/.env.example
