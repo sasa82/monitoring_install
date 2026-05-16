@@ -36,7 +36,8 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
+      - ./grafana/dashboards/json:/etc/grafana/provisioning/dashboards/json
     healthcheck:
       test: ["CMD", "wget", "-q", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 10s
@@ -88,10 +89,8 @@ services:
     container_name: clickhouse-exporter
     ports:
       - "${CLICKHOUSE_EXPORTER_PORT:-9116}:9116"
-    environment:
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-admin}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-changeme}
-      CLICKHOUSE_URL: http://${CLICKHOUSE_HOST:-localhost}:8123
+    command:
+      - "-scrape_uri=http://${CLICKHOUSE_HOST:-195.201.33.133}:8123/?user=${CLICKHOUSE_USER:-monitoring}"
     restart: unless-stopped
 
   ## ─── Kafka Exporter ──────────────────────────────────────────
@@ -101,7 +100,7 @@ services:
     ports:
       - "${KAFKA_EXPORTER_PORT:-9308}:9308"
     command:
-      - '--kafka.server=${KAFKA_HOST:-localhost}:${KAFKA_PORT:-9092}'
+      - '--kafka.server=${KAFKA_HOST:-195.201.33.133}:${KAFKA_PORT:-9092}'
     restart: unless-stopped
 
   ## ─── PostgreSQL Exporter ─────────────────────────────────────
@@ -111,7 +110,7 @@ services:
     ports:
       - "${POSTGRES_EXPORTER_PORT:-9187}:9187"
     environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRESQL_USER:-postgres}:${POSTGRESQL_PASSWORD:-changeme}@${POSTGRESQL_HOST:-localhost}:5432/${POSTGRESQL_DB:-postgres}?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://${POSTGRESQL_USER:-postgres}:${POSTGRESQL_PASSWORD:-changeme}@${POSTGRESQL_HOST:-195.201.33.133}:5432/${POSTGRESQL_DB:-postgres}?sslmode=disable"
     restart: unless-stopped
 
   ## ─── Redis Exporter ──────────────────────────────────────────
@@ -121,7 +120,7 @@ services:
     ports:
       - "${REDIS_EXPORTER_PORT:-9121}:9121"
     environment:
-      REDIS_ADDR: "redis://${REDIS_HOST:-localhost}:${REDIS_PORT:-6379}"
+      REDIS_ADDR: "redis://${REDIS_HOST:-195.201.33.133}:${REDIS_PORT:-6379}"
       REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
     restart: unless-stopped
 
