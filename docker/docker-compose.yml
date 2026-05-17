@@ -2,7 +2,7 @@ name: monitoring
 
 services:
 
-  ## ─── Prometheus ──────────────────────────────────────────────
+  ### ─── Prometheus ──────────────────────────────────────────────
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -23,7 +23,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  ## ─── Grafana ─────────────────────────────────────────────────
+  ### ─── Grafana ─────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -45,7 +45,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  ## ─── Alertmanager ────────────────────────────────────────────
+  ### ─── Alertmanager ────────────────────────────────────────────
   alertmanager:
     image: prom/alertmanager:latest
     container_name: alertmanager
@@ -66,7 +66,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  ## ─── Node Exporter ───────────────────────────────────────────
+  ### ─── Node Exporter ───────────────────────────────────────────
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
@@ -83,7 +83,7 @@ services:
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     restart: unless-stopped
 
-  ## ─── ClickHouse Exporter ─────────────────────────────────────
+  ### ─── ClickHouse Exporter node1 ───────────────────────────────
   clickhouse-exporter:
     image: f1yegor/clickhouse-exporter:latest
     container_name: clickhouse-exporter
@@ -93,17 +93,28 @@ services:
       - "-scrape_uri=http://${CLICKHOUSE_HOST:-195.201.33.133}:8123/?user=${CLICKHOUSE_USER:-monitoring}"
     restart: unless-stopped
 
-  ## ─── Kafka Exporter ──────────────────────────────────────────
+  ### ─── ClickHouse Exporter node2 ───────────────────────────────
+  clickhouse-exporter-2:
+    image: f1yegor/clickhouse-exporter:latest
+    container_name: clickhouse-exporter-2
+    ports:
+      - "${CLICKHOUSE_EXPORTER_2_PORT:-9117}:9116"
+    command:
+      - "-scrape_uri=http://${CLICKHOUSE_HOST:-195.201.33.133}:8124/?user=${CLICKHOUSE_USER:-monitoring}"
+    restart: unless-stopped
+
+  ### ─── Kafka Exporter ──────────────────────────────────────────
   kafka-exporter:
     image: danielqsj/kafka-exporter:latest
     container_name: kafka-exporter
     ports:
       - "${KAFKA_EXPORTER_PORT:-9308}:9308"
     command:
-      - '--kafka.server=${KAFKA_HOST:-195.201.33.133}:${KAFKA_PORT:-9092}'
+      - '--kafka.server=${KAFKA_HOST:-195.201.33.133}:9092'
+      - '--kafka.server=${KAFKA_HOST:-195.201.33.133}:9095'
     restart: unless-stopped
 
-  ## ─── PostgreSQL Exporter ─────────────────────────────────────
+  ### ─── PostgreSQL Exporter ─────────────────────────────────────
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: postgres-exporter
@@ -113,7 +124,7 @@ services:
       DATA_SOURCE_NAME: "postgresql://${POSTGRESQL_USER:-postgres}:${POSTGRESQL_PASSWORD:-changeme}@${POSTGRESQL_HOST:-195.201.33.133}:5432/${POSTGRESQL_DB:-postgres}?sslmode=disable"
     restart: unless-stopped
 
-  ## ─── Redis Exporter ──────────────────────────────────────────
+  ### ─── Redis Exporter ──────────────────────────────────────────
   redis-exporter:
     image: oliver006/redis_exporter:latest
     container_name: redis-exporter
@@ -128,3 +139,4 @@ volumes:
   prometheus_data:
   grafana_data:
   alertmanager_data:
+
