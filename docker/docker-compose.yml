@@ -1,5 +1,11 @@
 name: monitoring
 
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "${DOCKER_BIND_IP:-127.0.0.1}"
+
 services:
 
   ### ─── Prometheus ──────────────────────────────────────────────
@@ -28,7 +34,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "${GRAFANA_PORT:-3000}:3000"
+      - "0.0.0.0:${GRAFANA_PORT:-3000}:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-changeme}
@@ -90,7 +96,7 @@ services:
     ports:
       - "${CLICKHOUSE_EXPORTER_PORT:-9116}:9116"
     command:
-      - "-scrape_uri=http://${CLICKHOUSE_HOST:-195.201.33.133}:8123/?user=${CLICKHOUSE_USER:-monitoring}"
+      - "-scrape_uri=http://${CLICKHOUSE_HOST:-10.0.1.1}:${CLICKHOUSE_HTTP_PORT:-8123}/?user=${CLICKHOUSE_USER:-monitoring}"
     restart: unless-stopped
 
   ### ─── ClickHouse Exporter node2 ───────────────────────────────
@@ -100,7 +106,7 @@ services:
     ports:
       - "${CLICKHOUSE_EXPORTER_2_PORT:-9117}:9116"
     command:
-      - "-scrape_uri=http://${CLICKHOUSE_HOST:-195.201.33.133}:8124/?user=${CLICKHOUSE_USER:-monitoring}"
+      - "-scrape_uri=http://${CLICKHOUSE_HOST:-10.0.1.1}:${CLICKHOUSE_HTTP_PORT_2:-8124}/?user=${CLICKHOUSE_USER:-monitoring}"
     restart: unless-stopped
 
   ### ─── Kafka Exporter ──────────────────────────────────────────
@@ -110,8 +116,8 @@ services:
     ports:
       - "${KAFKA_EXPORTER_PORT:-9308}:9308"
     command:
-      - '--kafka.server=${KAFKA_HOST:-195.201.33.133}:9092'
-      - '--kafka.server=${KAFKA_HOST:-195.201.33.133}:9095'
+      - '--kafka.server=${KAFKA_HOST:-10.0.1.1}:9092'
+      - '--kafka.server=${KAFKA_HOST:-10.0.1.1}:9095'
     restart: unless-stopped
 
   ### ─── PostgreSQL Exporter ─────────────────────────────────────
@@ -121,7 +127,7 @@ services:
     ports:
       - "${POSTGRES_EXPORTER_PORT:-9187}:9187"
     environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRESQL_USER:-postgres}:${POSTGRESQL_PASSWORD:-changeme}@${POSTGRESQL_HOST:-195.201.33.133}:5432/${POSTGRESQL_DB:-postgres}?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://${POSTGRESQL_USER:-postgres}:${POSTGRESQL_PASSWORD:-changeme}@${POSTGRESQL_HOST:-10.0.1.1}:${POSTGRESQL_PORT:-5432}/${POSTGRESQL_DB:-postgres}?sslmode=disable"
     restart: unless-stopped
 
   ### ─── Redis Exporter ──────────────────────────────────────────
@@ -131,7 +137,7 @@ services:
     ports:
       - "${REDIS_EXPORTER_PORT:-9121}:9121"
     environment:
-      REDIS_ADDR: "redis://${REDIS_HOST:-195.201.33.133}:${REDIS_PORT:-6379}"
+      REDIS_ADDR: "redis://${REDIS_HOST:-10.0.1.1}:${REDIS_PORT:-6379}"
       REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
     restart: unless-stopped
 
