@@ -1,0 +1,66 @@
+groups:
+  - name: clickhouse
+    rules:
+      - alert: ClickHouseDown
+        expr: up{job="clickhouse"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          description: "ClickHouse exporter is down"
+
+      - alert: ClickHouseHighMemoryUsage
+        expr: clickhouse_memory_resident > 8 * 1024 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          description: "ClickHouse memory usage is above 8GB (current: {{ $value | humanize }})"
+
+      - alert: ClickHouseDelayedInserts
+        expr: clickhouse_delayed_inserts > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          description: "ClickHouse has delayed inserts (current: {{ $value }})"
+
+      - alert: ClickHouseHighPartCount
+        expr: clickhouse_max_part_count_for_partition > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          description: "ClickHouse partition has too many parts (current: {{ $value }})"
+
+      - alert: ClickHouseCriticalPartCount
+        expr: clickhouse_max_part_count_for_partition > 1000
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          description: "ClickHouse partition has critical number of parts - inserts may be stopped (current: {{ $value }})"
+
+      - alert: ClickHouseReplicationDelay
+        expr: clickhouse_replicas_max_absolute_delay > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          description: "ClickHouse replication delay is above 300s (current: {{ $value }}s)"
+
+      - alert: ClickHouseCriticalReplicationDelay
+        expr: clickhouse_replicas_max_absolute_delay > 900
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          description: "ClickHouse replication delay is critical (current: {{ $value }}s)"
+
+      - alert: ClickHouseZookeeperExceptions
+        expr: rate(clickhouse_zoo_keeper_connection_loss_started_timestamp_seconds[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          description: "ClickHouse Keeper connection losses detected"

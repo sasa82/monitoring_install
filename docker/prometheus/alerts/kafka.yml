@@ -1,0 +1,50 @@
+groups:
+  - name: kafka
+    rules:
+      - alert: KafkaDown
+        expr: up{job="kafka"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          description: "Kafka exporter is down"
+
+      - alert: KafkaBrokerDown
+        expr: kafka_brokers < 2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          description: "Kafka cluster has less than 2 brokers (current: {{ $value }})"
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: sum(kafka_topic_partition_under_replicated_partition) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          description: "Kafka has under replicated partitions (current: {{ $value }})"
+
+      - alert: KafkaOfflinePartitions
+        expr: sum(kafka_topic_partition_leader) == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          description: "Kafka has offline partitions with no leader"
+
+      - alert: KafkaConsumerGroupLag
+        expr: sum(kafka_consumergroup_lag) by (consumergroup, topic) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          description: "Kafka consumer group {{ $labels.consumergroup }} lag is high on topic {{ $labels.topic }} (current: {{ $value }})"
+
+      - alert: KafkaConsumerGroupCriticalLag
+        expr: sum(kafka_consumergroup_lag) by (consumergroup, topic) > 10000
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          description: "Kafka consumer group {{ $labels.consumergroup }} lag is critical on topic {{ $labels.topic }} (current: {{ $value }})"

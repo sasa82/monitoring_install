@@ -1,0 +1,50 @@
+groups:
+  - name: redis
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          description: "Redis exporter is down"
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          description: "Redis memory usage is above 80% (current: {{ $value | printf \"%.1f\" }}%)"
+
+      - alert: RedisCriticalMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          description: "Redis memory usage is critical (current: {{ $value | printf \"%.1f\" }}%)"
+
+      - alert: RedisHighConnectedClients
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          description: "Redis has high number of connected clients (current: {{ $value }})"
+
+      - alert: RedisRejectedConnections
+        expr: rate(redis_rejected_connections_total[2m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          description: "Redis is rejecting connections (current rate: {{ $value | printf \"%.2f\" }}/s)"
+
+      - alert: RedisKeyEvictions
+        expr: rate(redis_evicted_keys_total[2m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          description: "Redis is evicting keys at high rate (current: {{ $value | printf \"%.0f\" }}/s)"
