@@ -1,0 +1,56 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'job']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'telegram-default'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'telegram-critical'
+      repeat_interval: 1h
+
+receivers:
+  ### ─── Default Receiver ──────────────────────────────────────
+  - name: 'telegram-default'
+    telegram_configs:
+      - bot_token: 'YOUR_TELEGRAM_BOT_TOKEN'
+        chat_id: YOUR_TELEGRAM_CHAT_ID
+        message: |
+          {{ range .Alerts }}
+          ⚠️ *{{ .Status | toUpper }}*
+          *Alert:* {{ .Labels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Job:* {{ .Labels.job }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        parse_mode: 'Markdown'
+        send_resolved: true
+
+  ### ─── Critical Alerts ───────────────────────────────────────
+  - name: 'telegram-critical'
+    telegram_configs:
+      - bot_token: 'YOUR_TELEGRAM_BOT_TOKEN'
+        chat_id: YOUR_TELEGRAM_CHAT_ID
+        message: |
+          {{ range .Alerts }}
+          🔴 *CRITICAL - {{ .Status | toUpper }}*
+          *Alert:* {{ .Labels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Job:* {{ .Labels.job }}
+          *Description:* {{ .Annotations.description }}
+          *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        parse_mode: 'Markdown'
+        send_resolved: true
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'job']
+

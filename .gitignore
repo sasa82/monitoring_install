@@ -1,3 +1,5 @@
 ## Environment files
 docker/.env
 !docker/.env.example
+docker/alertmanager/alertmanager.yml
+!docker/alertmanager/alertmanager.yml.example
